@@ -6,16 +6,16 @@ if(!defined("IN_MYBB"))
 	die("Direct initialization of this file is not allowed.");
 }
 
-$plugins->add_hook("admin_formcontainer_output_row", "schedule_permission");
-$plugins->add_hook("admin_user_groups_edit_commit", "schedule_permission_commit");
-$plugins->add_hook("newthread_start", "schedule_newthread");
-$plugins->add_hook("newthread_do_newthread_end", "schedule_do_newthread");
-$plugins->add_hook("editpost_end", "schedule_editpost");
-$plugins->add_hook("editpost_do_editpost_end", "schedule_do_editpost");
-$plugins->add_hook("misc_start", "schedule_misc");
-$plugins->add_hook("newreply_do_newreply_end", "schedule_do_newreply");
+$plugins->add_hook("admin_formcontainer_output_row", "schedule_permission"); #done
+$plugins->add_hook("admin_user_groups_edit_commit", "schedule_permission_commit"); #done
+$plugins->add_hook("newthread_start", "schedule_newthread"); #TODO: Template + Form w date settings
+$plugins->add_hook("newthread_do_newthread_end", "schedule_do_newthread"); #TODO: get date settings into scheduled table
+$plugins->add_hook("editpost_end", "schedule_editpost"); #TODO: edit date settings
+$plugins->add_hook("editpost_do_editpost_end", "schedule_do_editpost"); #TODO: edit date settings into scheduled table
+$plugins->add_hook("newreply_start", "schedule_newreply"); #TODO: Template + Form w date settings
+$plugins->add_hook("newreply_do_newreply_end", "schedule_do_newreply"); #TODO: get date settings into scheduled table
 if(class_exists('MybbStuff_MyAlerts_AlertTypeManager')) {
-	$plugins->add_hook("global_start", "schedule_alerts");
+	$plugins->add_hook("global_start", "schedule_alerts"); #done
 }
 
 function schedule_info()
