@@ -169,6 +169,35 @@ function schedule_permission_commit()
 	$updated_group['canschedule'] = $mybb->get_input('canschedule', MyBB::INPUT_INT);
 }
 
+function schedule_newthread() {
+    global $mybb, $lang, $post_errors, $newthread_schedule;
+    $lang->load('schedule');
+    if($mybb->usergroup['canschedule'] == 1) {
+        // previewing post?
+        if(isset($mybb->input['previewpost']) || $post_errors) {
+            $schedule = htmlspecialchars_uni($mybb->get_input('schedule'));
+            $sdate = $mybb->get_input('sdate');
+            $stime = $mybb->get_input('stime');
+        }
+        #https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/time
+        eval("\$newthread_schedule = \"".$templates->get("newthread_schedule")."\";");
+    }
+}
+
+function schedule_newreply() {
+    global $mybb, $lang, $post_errors, $newreply_schedule;
+    $lang->load('schedule');
+    if($mybb->usergroup['canschedule'] == 1) {
+        // previewing post?
+        if(isset($mybb->input['previewpost']) || $post_errors) {
+            $schedule = htmlspecialchars_uni($mybb->get_input('schedule'));
+            $sdate = $mybb->get_input('sdate');
+            $stime = $mybb->get_input('stime');
+        }
+        eval("\$newreply_schedule = \"".$templates->get("newthread_schedule")."\";");
+    }
+}
+
 function schedule_alerts() {
 	global $mybb, $lang;
 	$lang->load('schedule');
