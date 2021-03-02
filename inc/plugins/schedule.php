@@ -13,7 +13,7 @@ $plugins->add_hook("datahandler_post_validate_thread", "schedule_validate");
 $plugins->add_hook("datahandler_post_validate_post", "schedule_validate");
 $plugins->add_hook("newthread_do_newthread_end", "schedule_do_newthread");
 $plugins->add_hook("editpost_start", "schedule_editpost");
-$plugins->add_hook("editpost_do_editpost_end", "schedule_do_editpost"); #TODO: edit date settings into scheduled table
+$plugins->add_hook("editpost_do_editpost_end", "schedule_do_editpost");
 $plugins->add_hook("newreply_start", "schedule_newreply"); 
 $plugins->add_hook("newreply_do_newreply_end", "schedule_do_newreply");
 $plugins->add_hook("usercp_drafts_start", "schedule_drafts");
@@ -239,6 +239,7 @@ function schedule_activate()
     find_replace_templatesets("newthread", "#".preg_quote('{$attachbox}')."#i", '{$attachbox} {$newthread_schedule}');
 	find_replace_templatesets("newreply", "#".preg_quote('{$attachbox}')."#i", '{$attachbox} {$newreply_schedule}');
 	find_replace_templatesets("editpost", "#".preg_quote('{$attachbox}')."#i", '{$attachbox} {$editpost_schedule}');
+	find_replace_templatesets("usercp_drafts_draft", "#".preg_quote('{$detail}')."#i", '{$detail} <br />{$scheduled[$id]}');
 
 }
 
@@ -261,6 +262,7 @@ function schedule_deactivate()
     find_replace_templatesets("newthread", "#".preg_quote('{$newthread_schedule}')."#i", '', 0);
 	find_replace_templatesets("newreply", "#".preg_quote('{$newreply_schedule}')."#i", '', 0);
     find_replace_templatesets("editpost", "#".preg_quote('{$editpost_schedule}')."#i", '', 0);
+	find_replace_templatesets("usercp_drafts_draft", "#".preg_quote(' <br />{$scheduled[$id]}')."#i", '', 0);
 
 }
 
@@ -327,12 +329,10 @@ function schedule_validate(&$dh) {
 		if(!$mybb->get_input('savedraft')) {
 			$dh->set_error($lang->schedule_error_no_draft);
 		}
-
 		// no valid timestamp given
 		if(!$mybb->get_input('sdate') || !$mybb->get_input('stime')) {
 			$dh->set_error($lang->schedule_error_no_time);
 		}
-
 		// given timestamp is below current time
 		$sdate = strtotime("{$mybb->get_input('sdate')} {$mybb->get_input('stime')}");
 		$now = TIME_NOW;
@@ -441,7 +441,22 @@ function schedule_editpost() {
 }
 
 function schedule_do_editpost() {
+	global $mybb, $db, $tid, $pid;
 
+	if($mybb->get_input('schedule') == 1) {
+		$db->delete_query("scheduled", "tid='{$tid}'");
+
+		if($mybb->get_input('schedule') == 1) {
+			$sdate = strtotime("{$mybb->get_input('sdate')} {$mybb->get_input('stime')}");
+			$new_array = [
+				"tid" => $thread['tid'],
+				"pid" => $pid,
+				"date" => $sdate,
+				"display" => 0
+			];
+			$db->insert_query("scheduled", $new_array);
+		}
+	}
 }
 
 function schedule_drafts() {
@@ -450,10 +465,9 @@ function schedule_drafts() {
 	$scheduled = [];
 
 	$query = $db->query("
-			SELECT p.subject, p.pid, t.tid, t.subject AS threadsubject, t.fid, f.name AS forumname, p.dateline, t.visible AS threadvisible, p.visible AS postvisible, s.date
+			SELECT p.subject, p.pid, t.tid, t.subject AS threadsubject, t.fid, p.dateline, t.visible AS threadvisible, p.visible AS postvisible, s.date
 			FROM ".TABLE_PREFIX."posts p
 			LEFT JOIN ".TABLE_PREFIX."threads t ON (t.tid=p.tid)
-			LEFT JOIN ".TABLE_PREFIX."forums f ON (f.fid=t.fid)
 			RIGHT JOIN ".TABLE_PREFIX."scheduled s ON (s.pid=p.pid)
 			WHERE p.uid = '{$mybb->user['uid']}' AND p.visible = '-2'
 			ORDER BY p.dateline DESC
