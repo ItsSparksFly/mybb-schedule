@@ -9,9 +9,8 @@ if(!defined("IN_MYBB"))
 $plugins->add_hook("admin_formcontainer_output_row", "schedule_permission"); #done
 $plugins->add_hook("admin_user_groups_edit_commit", "schedule_permission_commit"); #done
 $plugins->add_hook("newthread_start", "schedule_newthread"); #TODO: Template + Form w date settings
-$plugins->add_hook("datahandler_post_validate_thread", "schedule_validate");
+$plugins->add_hook("datahandler_post_validate_thread", "schedule_validate"); #done
 $plugins->add_hook("datahandler_post_validate_post", "schedule_validate");
-$plugins->add_hook("newthread_do_newthread_start", "schedule_do_newthread_start");
 $plugins->add_hook("newthread_do_newthread_end", "schedule_do_newthread"); #TODO: get date settings into scheduled table
 $plugins->add_hook("editpost_end", "schedule_editpost");
 $plugins->add_hook("editpost_do_editpost_end", "schedule_do_editpost"); #TODO: edit date settings into scheduled table
@@ -171,7 +170,7 @@ function schedule_permission($above)
 
 	if($above['title'] == $lang->misc && $lang->misc)
 	{
-		$above['content'] .= "<div class=\"group_settings_bit\">".$form->generate_check_box("canschedule", 1, {$lang->schedule_permission}, array("checked" => $mybb->input['canschedule']))."</div>";
+		$above['content'] .= "<div class=\"group_settings_bit\">".$form->generate_check_box("canschedule", 1, $lang->schedule_permission, array("checked" => $mybb->input['canschedule']))."</div>";
 	}
 
 	return $above;
@@ -185,7 +184,7 @@ function schedule_permission_commit()
 
 // load form template in newthread
 function schedule_newthread() {
-    global $mybb, $lang, $post_errors, $newthread_schedule;
+    global $mybb, $lang, $templates, $post_errors, $newthread_schedule;
     $lang->load('schedule');
     if($mybb->usergroup['canschedule'] == 1) {
         // previewing post?
@@ -201,31 +200,35 @@ function schedule_newthread() {
     }
 }
 
-function schedule_do_newthread_start() {
-	global $mybb, $new_thread;
-	$new_thread['scheduled'] = 1;
-}
-
 // validate if post is posted as draft, set error otherwise
 function schedule_validate(&$dh) {
-	global $mybb, $lang, $thread, $post;
-	if($thread['scheduled'] == 1) {
-		if($thread['visibility'] == 1 || $post['visibility'] == 1) {
+	global $mybb, $lang;
+	$lang->load('schedule');
+	if($mybb->get_input('schedule') == 1 && $mybb->usergroup['canschedule'] == 1) {
+		if($mybb->get_input('savedraft') != 1) {
 			$dh->set_error($lang->schedule_error_no_draft);
+		}
+		if(!$mybb->get_input('sdate') || !$mybb->get_input('stime')) {
+			$dh->set_error($lang->schedule_error_no_time);
+		}
+		$sdate = strtotime("{$mybb->get_input('sdate')} {$mybb->get_input('stime')}");
+		$now = TIME_NOW;
+		if($now > $sdate) {
+			$dh->set_error($lang->schedule_error_wrong_timing);
 		}
 	}
 }
 
 // get data into database
 function schedule_do_newthread() {
-	global $db, $mybb, $tid, $pid;
+	global $db, $mybb, $tid;
 	$ownuid = $mybb->user['uid'];
 	
-	if($mybb->get_input('schedule') = 1) {
+	if($mybb->get_input('schedule') == 1) {
 		$sdate = strtotime("{$mybb->get_input('sdate')} {$mybb->get_input('stime')}");
 		$new_array = [
 			"tid" => $tid,
-			"pid" => $pid,
+			"pid" => 0,
 			"date" => $sdate,
 			"display" => 0
 		];
@@ -235,7 +238,7 @@ function schedule_do_newthread() {
 
 // load form template in newreply
 function schedule_newreply() {
-    global $mybb, $lang, $post_errors, $newreply_schedule;
+    global $mybb, $lang, $templates, $post_errors, $newreply_schedule;
     $lang->load('schedule');
     if($mybb->usergroup['canschedule'] == 1) {
         // previewing post?
@@ -251,7 +254,7 @@ function schedule_newreply() {
 }
 
 function schedule_editpost() {
-	global $mybb, $lang, $post_errors, $pid, $editpost_schedule;
+	global $mybb, $lang, $templates, $post_errors, $pid, $editpost_schedule;
 	$lang->load('schedule');
 	if($mybb->usergroup['canschedule'] == 1) {
         if(isset($mybb->input['previewpost']) || $post_errors) {
@@ -332,7 +335,7 @@ function schedule_alerts() {
 		}
 
 		$formatterManager->registerFormatter(
-				new MybbStuff_MyAlerts_Formatter_scheduleNewthreadFormatter($mybb, $lang, 'schedule_posted')
+				new MybbStuff_MyAlerts_Formatter_schedulePostedFormatter($mybb, $lang, 'schedule_posted')
 		);
 	}
 
