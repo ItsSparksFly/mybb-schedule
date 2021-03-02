@@ -86,6 +86,24 @@ function schedule_install()
          'locked' => 0
      ];
      $db->insert_query('tasks', $ScheduleTask);
+
+	 // add css to themes 
+	 $css = array(
+        'name' => 'schedule.css',
+        'tid' => 1,
+        "stylesheet" => '.hide { display: none; }',
+        'cachefile' => $db->escape_string(str_replace('/', '', schedule.css)),
+        'lastmodified' => time()
+    );
+
+    require_once MYBB_ADMIN_DIR."inc/functions_themes.php";
+    $sid = $db->insert_query("themestylesheets", $css);
+    $db->update_query("themestylesheets", array("cachefile" => "css.php?stylesheet=".$sid), "sid = '".$sid."'", 1);
+
+    $tids = $db->simple_select("themes", "tid");
+    while($theme = $db->fetch_array($tids)) {
+        update_theme_stylesheet_list($theme['tid']);
+    }
 	
 }
 
@@ -115,6 +133,14 @@ function schedule_uninstall()
 
     // delete task
     $db->delete_query('tasks', 'file = "schedule"');
+
+    // drop css
+    require_once MYBB_ADMIN_DIR."inc/functions_themes.php";
+    $db->delete_query("themestylesheets", "name = 'schedule.css'");
+    $query = $db->simple_select("themes", "tid");
+    while($theme = $db->fetch_array($query)) {
+        update_theme_stylesheet_list($theme['tid']);
+    }
 
 }
 function schedule_activate()
