@@ -255,7 +255,7 @@ function schedule_deactivate()
 		$alertTypeManager->deleteByCode('schedule_posted');
 	}
 	
-	$db->delete_query("templates", "title IN(newthread_schedule)");
+	$db->delete_query("templates", "title IN('newthread_schedule')");
 	include MYBB_ROOT."/inc/adminfunctions_templates.php";
     find_replace_templatesets("newthread", "#".preg_quote('{$newthread_schedule}')."#i", '', 0);
 	find_replace_templatesets("newreply", "#".preg_quote('{$newreply_schedule}')."#i", '', 0);
@@ -308,7 +308,7 @@ function schedule_newthread() {
 						$stime = date("H:i", $scheduled['date']);
 					}
 				}
-				$sdate = "00:00";
+				$stime = "00:00";
 				eval("\$newthread_schedule = \"".$templates->get("newthread_schedule")."\";");
 			}
 		}
@@ -382,7 +382,7 @@ function schedule_newreply() {
 						$stime = date("H:i", $scheduled['date']);
 					}
 				}
-				$sdate = "00:00";
+				$stime = "00:00";
 				eval("\$newreply_schedule = \"".$templates->get("newthread_schedule")."\";");
 			}
 		}
