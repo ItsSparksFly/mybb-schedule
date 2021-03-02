@@ -308,6 +308,7 @@ function schedule_newthread() {
 						$stime = date("H:i", $scheduled['date']);
 					}
 				}
+				$sdate = "00:00";
 				eval("\$newthread_schedule = \"".$templates->get("newthread_schedule")."\";");
 			}
 		}
@@ -381,6 +382,7 @@ function schedule_newreply() {
 						$stime = date("H:i", $scheduled['date']);
 					}
 				}
+				$sdate = "00:00";
 				eval("\$newreply_schedule = \"".$templates->get("newthread_schedule")."\";");
 			}
 		}
