@@ -16,6 +16,7 @@ $plugins->add_hook("editpost_start", "schedule_editpost");
 $plugins->add_hook("editpost_do_editpost_end", "schedule_do_editpost"); #TODO: edit date settings into scheduled table
 $plugins->add_hook("newreply_start", "schedule_newreply"); 
 $plugins->add_hook("newreply_do_newreply_end", "schedule_do_newreply");
+$plugins->add_hook("usercp_drafts_start", "schedule_drafts");
 if(class_exists('MybbStuff_MyAlerts_AlertTypeManager')) {
 	$plugins->add_hook("global_start", "schedule_alerts"); #TODO: format alert
 }
@@ -117,7 +118,7 @@ function schedule_install()
 	$gid = $db->insert_query("settinggroups", $setting_group);
 	
 	$setting_array = [
-		'ipt_inplay' => [
+		'schedule_forums' => [
 			'title' => $lang->schedule_forums,
 			'description' => $lang->schedule_forums_desc,
 			'optionscode' => 'forumselect',
@@ -300,7 +301,7 @@ function schedule_newthread() {
 					$sdate = $mybb->get_input('sdate');
 					$stime = $mybb->get_input('stime');
 				}
-				if($mybb->input['action'] == "editdraft") {
+				elseif($mybb->input['action'] == "editdraft") {
 					$scheduled = get_schedule($pid);
 					if($scheduled) {
 						$selected = "selected";
@@ -308,7 +309,9 @@ function schedule_newthread() {
 						$stime = date("H:i", $scheduled['date']);
 					}
 				}
-				$stime = "00:00";
+				else {
+					$stime = "00:00";
+				}
 				eval("\$newthread_schedule = \"".$templates->get("newthread_schedule")."\";");
 			}
 		}
@@ -374,7 +377,7 @@ function schedule_newreply() {
 					$sdate = $mybb->get_input('sdate');
 					$stime = $mybb->get_input('stime');
 				}
-				if($mybb->input['action'] == "editdraft") {
+				elseif($mybb->input['action'] == "editdraft") {
 					$scheduled = get_schedule($pid);
 					if($scheduled) {
 						$selected = "selected";
@@ -382,7 +385,9 @@ function schedule_newreply() {
 						$stime = date("H:i", $scheduled['date']);
 					}
 				}
-				$stime = "00:00";
+				else {
+					$stime = "00:00";
+				}
 				eval("\$newreply_schedule = \"".$templates->get("newthread_schedule")."\";");
 			}
 		}
@@ -436,6 +441,36 @@ function schedule_editpost() {
 }
 
 function schedule_do_editpost() {
+
+}
+
+function schedule_drafts() {
+	global $mybb, $db, $lang, $scheduled;
+	$lang->load('schedule');
+	$scheduled = [];
+
+	$query = $db->query("
+			SELECT p.subject, p.pid, t.tid, t.subject AS threadsubject, t.fid, f.name AS forumname, p.dateline, t.visible AS threadvisible, p.visible AS postvisible, s.date
+			FROM ".TABLE_PREFIX."posts p
+			LEFT JOIN ".TABLE_PREFIX."threads t ON (t.tid=p.tid)
+			LEFT JOIN ".TABLE_PREFIX."forums f ON (f.fid=t.fid)
+			RIGHT JOIN ".TABLE_PREFIX."scheduled s ON (s.pid=p.pid)
+			WHERE p.uid = '{$mybb->user['uid']}' AND p.visible = '-2'
+			ORDER BY p.dateline DESC
+	");
+
+	while($draftinfo = $db->fetch_array($query)) {
+		if($draftinfo['threadvisible'] == 1) {
+			$pids[] = $draftinfo['pid'];
+		} elseif($draftinfo['threadvisible'] == -2) {
+			$pids[] = $draftinfo['tid'];
+		}
+		$dates[] = $draftinfo['date'];
+	}
+	foreach($pids as $key => $pid) {
+		$datestring = "<strong>Veröffentlichung am:</strong> " . date("d.m.Y H:i", $dates[$key]);
+		$scheduled[$pid] = $datestring;
+	}
 
 }
 
