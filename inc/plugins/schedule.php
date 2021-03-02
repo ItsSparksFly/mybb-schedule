@@ -284,27 +284,34 @@ function schedule_permission_commit()
 
 // load form template in newthread
 function schedule_newthread() {
-    global $mybb, $lang, $templates, $post_errors, $pid, $newthread_schedule;
+    global $mybb, $lang, $templates, $post_errors, $pid, $forum, $newthread_schedule;
     $lang->load('schedule');
-    if($mybb->usergroup['canschedule'] == 1) {
-        // previewing post?
-        if(isset($mybb->input['previewpost']) || $post_errors) {
-            if($mybb->get_input('schedule') == 1) {
-				$selected = "selected";
+	$forum['parentlist'] = ",".$forum['parentlist'].",";   
+    $selectedforums = explode(",", $mybb->settings['schedule_forums']);
+
+    foreach($selectedforums as $selected) {
+        if(preg_match("/,$selected,/i", $forum['parentlist'])) {
+			if($mybb->usergroup['canschedule'] == 1) {
+				// previewing post?
+				if(isset($mybb->input['previewpost']) || $post_errors) {
+					if($mybb->get_input('schedule') == 1) {
+						$selected = "selected";
+					}
+					$sdate = $mybb->get_input('sdate');
+					$stime = $mybb->get_input('stime');
+				}
+				if($mybb->input['action'] == "editdraft") {
+					$scheduled = get_schedule($pid);
+					if($scheduled) {
+						$selected = "selected";
+						$sdate = date("Y-m-d", $scheduled['date']);
+						$stime = date("H:i", $scheduled['date']);
+					}
+				}
+				eval("\$newthread_schedule = \"".$templates->get("newthread_schedule")."\";");
 			}
-            $sdate = $mybb->get_input('sdate');
-            $stime = $mybb->get_input('stime');
-        }
-		if($mybb->input['action'] == "editdraft") {
-			$scheduled = get_schedule($pid);
-			if($scheduled) {
-				$selected = "selected";
-				$sdate = date("Y-m-d", $scheduled['date']);
-				$stime = date("H:i", $scheduled['date']);
-			}
-        }
-        eval("\$newthread_schedule = \"".$templates->get("newthread_schedule")."\";");
-    }
+		}
+	}
 }
 
 // catch various errors
@@ -328,11 +335,6 @@ function schedule_validate(&$dh) {
 		if($now > $sdate) {
 			$dh->set_error($lang->schedule_error_wrong_timing);
 		}
-
-		// even hours
-		if(date("i", $sdate) != "00") {
-			$dh->set_error($lang->schedule_error_wrong_minutes);
-		}
 	}
 }
 
@@ -355,27 +357,34 @@ function schedule_do_newthread() {
 
 // load form template in newreply
 function schedule_newreply() {
-    global $mybb, $db, $lang, $templates, $post_errors, $pid, $newreply_schedule;
+    global $mybb, $db, $lang, $templates, $post_errors, $pid, $forum, $newreply_schedule;
     $lang->load('schedule');
-    if($mybb->usergroup['canschedule'] == 1) {
-        // previewing post?
-        if(isset($mybb->input['previewpost']) || $post_errors) {
-            if($mybb->get_input('schedule') == 1) {
-				$selected = "selected";
+	$forum['parentlist'] = ",".$forum['parentlist'].",";   
+    $selectedforums = explode(",", $mybb->settings['schedule_forums']);
+
+    foreach($selectedforums as $selected) {
+        if(preg_match("/,$selected,/i", $forum['parentlist'])) {
+			if($mybb->usergroup['canschedule'] == 1) {
+				// previewing post?
+				if(isset($mybb->input['previewpost']) || $post_errors) {
+					if($mybb->get_input('schedule') == 1) {
+						$selected = "selected";
+					}
+					$sdate = $mybb->get_input('sdate');
+					$stime = $mybb->get_input('stime');
+				}
+				if($mybb->input['action'] == "editdraft") {
+					$scheduled = get_schedule($pid);
+					if($scheduled) {
+						$selected = "selected";
+						$sdate = date("Y-m-d", $scheduled['date']);
+						$stime = date("H:i", $scheduled['date']);
+					}
+				}
+				eval("\$newreply_schedule = \"".$templates->get("newthread_schedule")."\";");
 			}
-            $sdate = $mybb->get_input('sdate');
-            $stime = $mybb->get_input('stime');
-        }
-		if($mybb->input['action'] == "editdraft") {
-			$scheduled = get_schedule($pid);
-			if($scheduled) {
-				$selected = "selected";
-				$sdate = date("Y-m-d", $scheduled['date']);
-				$stime = date("H:i", $scheduled['date']);
-			}
-        }
-        eval("\$newreply_schedule = \"".$templates->get("newthread_schedule")."\";");
-    }
+		}
+	}
 }
 
 function schedule_do_newreply() {
@@ -392,29 +401,35 @@ function schedule_do_newreply() {
 		];
 		$db->insert_query("scheduled", $new_array);
 	}
-
 }
 
 function schedule_editpost() {
-	global $mybb, $db, $lang, $templates, $post_errors, $pid, $editpost_schedule;
+	global $mybb, $db, $lang, $templates, $post_errors, $pid, $forum, $editpost_schedule;
 	$lang->load('schedule');
-	if($mybb->usergroup['canschedule'] == 1) {
-        if(isset($mybb->input['previewpost']) || $post_errors) {
-            if($mybb->get_input('schedule') == 1) {
-				$selected = "selected";
+		$forum['parentlist'] = ",".$forum['parentlist'].",";   
+    $selectedforums = explode(",", $mybb->settings['schedule_forums']);
+
+    foreach($selectedforums as $selected) {
+        if(preg_match("/,$selected,/i", $forum['parentlist'])) {
+			if($mybb->usergroup['canschedule'] == 1) {
+				if(isset($mybb->input['previewpost']) || $post_errors) {
+					if($mybb->get_input('schedule') == 1) {
+						$selected = "selected";
+					}
+					$sdate = $mybb->get_input('sdate');
+					$stime = $mybb->get_input('stime');
+				}
+				else {
+					$scheduled = get_schedule($pid);
+					if($scheduled) {
+						$selected = "selected";
+						$sdate = date("Y-m-d", $scheduled['date']);
+						$stime = date("H:i", $scheduled['date']);
+					}
+				}		
+				eval("\$editpost_schedule = \"".$templates->get("newthread_schedule")."\";");
 			}
-            $sdate = $mybb->get_input('sdate');
-            $stime = $mybb->get_input('stime');
-        }
-		else {
-			$scheduled = get_schedule($pid);
-			if($scheduled) {
-				$selected = "selected";
-				$sdate = date("Y-m-d", $scheduled['date']);
-				$stime = date("H:i", $scheduled['date']);
-			}
-		}		
-		eval("\$editpost_schedule = \"".$templates->get("newthread_schedule")."\";");
+		}
 	}
 }
 
