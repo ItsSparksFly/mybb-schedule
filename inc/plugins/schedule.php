@@ -12,8 +12,6 @@ $plugins->add_hook("newthread_start", "schedule_newthread");
 $plugins->add_hook("datahandler_post_validate_thread", "schedule_validate");
 $plugins->add_hook("datahandler_post_validate_post", "schedule_validate");
 $plugins->add_hook("newthread_do_newthread_end", "schedule_do_newthread");
-$plugins->add_hook("editpost_start", "schedule_editpost");
-$plugins->add_hook("editpost_do_editpost_end", "schedule_do_editpost");
 $plugins->add_hook("newreply_start", "schedule_newreply"); 
 $plugins->add_hook("newreply_do_newreply_end", "schedule_do_newreply");
 $plugins->add_hook("usercp_drafts_start", "schedule_drafts");
@@ -238,7 +236,6 @@ function schedule_activate()
 	include MYBB_ROOT."/inc/adminfunctions_templates.php";
     find_replace_templatesets("newthread", "#".preg_quote('{$attachbox}')."#i", '{$attachbox} {$newthread_schedule}');
 	find_replace_templatesets("newreply", "#".preg_quote('{$attachbox}')."#i", '{$attachbox} {$newreply_schedule}');
-	find_replace_templatesets("editpost", "#".preg_quote('{$attachbox}')."#i", '{$attachbox} {$editpost_schedule}');
 	find_replace_templatesets("usercp_drafts_draft", "#".preg_quote('{$detail}')."#i", '{$detail} <br />{$scheduled[$id]}');
 
 }
@@ -348,6 +345,10 @@ function schedule_do_newthread() {
 	$ownuid = $mybb->user['uid'];
 	$thread = get_thread($tid);
 	if($mybb->get_input('schedule') == 1) {
+		$check = $db->fetch_field($db->simple_select("scheduled", "sid", "tid='{$thread['tid']}'"), "sid");
+		if($check) {
+			$db->delete_query("scheduled", "sid='$check'");
+		}
 		$sdate = strtotime("{$mybb->get_input('sdate')} {$mybb->get_input('stime')}");
 		$new_array = [
 			"tid" => $tid,
@@ -399,6 +400,10 @@ function schedule_do_newreply() {
 	$ownuid = $mybb->user['uid'];
 
 	if($mybb->get_input('schedule') == 1) {
+		$check = $db->fetch_field($db->simple_select("scheduled", "sid", "tid='{$thread['tid']}'"), "sid");
+		if($check) {
+			$db->delete_query("scheduled", "sid='$check'");
+		}
 		$sdate = strtotime("{$mybb->get_input('sdate')} {$mybb->get_input('stime')}");
 		$new_array = [
 			"tid" => $thread['tid'],
@@ -407,55 +412,6 @@ function schedule_do_newreply() {
 			"display" => 0
 		];
 		$db->insert_query("scheduled", $new_array);
-	}
-}
-
-function schedule_editpost() {
-	global $mybb, $db, $lang, $templates, $post_errors, $pid, $forum, $editpost_schedule;
-	$lang->load('schedule');
-		$forum['parentlist'] = ",".$forum['parentlist'].",";   
-    $selectedforums = explode(",", $mybb->settings['schedule_forums']);
-
-    foreach($selectedforums as $selected) {
-        if(preg_match("/,$selected,/i", $forum['parentlist'])) {
-			if($mybb->usergroup['canschedule'] == 1) {
-				if(isset($mybb->input['previewpost']) || $post_errors) {
-					if($mybb->get_input('schedule') == 1) {
-						$selected = "selected";
-					}
-					$sdate = $mybb->get_input('sdate');
-					$stime = $mybb->get_input('stime');
-				}
-				else {
-					$scheduled = get_schedule($pid);
-					if($scheduled) {
-						$selected = "selected";
-						$sdate = date("Y-m-d", $scheduled['date']);
-						$stime = date("H:i", $scheduled['date']);
-					}
-				}		
-				eval("\$editpost_schedule = \"".$templates->get("newthread_schedule")."\";");
-			}
-		}
-	}
-}
-
-function schedule_do_editpost() {
-	global $mybb, $db, $tid, $pid;
-
-	if($mybb->get_input('schedule') == 1) {
-		$db->delete_query("scheduled", "tid='{$tid}'");
-
-		if($mybb->get_input('schedule') == 1) {
-			$sdate = strtotime("{$mybb->get_input('sdate')} {$mybb->get_input('stime')}");
-			$new_array = [
-				"tid" => $thread['tid'],
-				"pid" => $pid,
-				"date" => $sdate,
-				"display" => 0
-			];
-			$db->insert_query("scheduled", $new_array);
-		}
 	}
 }
 
