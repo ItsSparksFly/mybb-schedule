@@ -134,7 +134,45 @@ function schedule_activate()
 		$alertType->setCanBeUserDisabled(true);
 
 	}   
+
+	$newthread_schedule = [
+        'title'        => 'newthread_schedule',
+        'template'    => $db->escape_string('<script>
+		$(document).on(\'change\', \'.div-toggle\', function() {
+			  var target = $(this).data(\'target\');
+			  var show = $("option:selected", this).data(\'show\');
+			  $(target).children().addClass(\'hide\');
+			  $(show).removeClass(\'hide\');
+		});
+		$(document).ready(function(){
+				$(\'.div-toggle\').trigger(\'change\');
+		});
+	</script>
+	
+	<table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
+	<tr>
+	<td class="thead" colspan="2"><strong>{$lang->schedule}</strong></td>
+	</tr>
+	<tr>
+	<td class="trow2" width="20%">
+		<strong>{$lang->schedule}:</strong><br />
+		<span class="smalltext">{$lang->schedule_desc}</span>
+	</td>
+		<td class="trow2">
+			<select name="schedule" class="div-toggle">
+				<option>Nein</option>
+				<option value="1" data-show=".with" {$selected}>Ja</option>
+			</select> <input type="date" name="sdate" value="{$sdate}" class="with hide" /> <input type="time" name="stime" value="{$stime}" class="with hide" />
+		</td>
+	</tr>
+	</table>'),
+        'sid'        => '-1',
+        'version'    => '',
+        'dateline'    => TIME_NOW
+    ];
     
+	$db->insert_query("templates", $newthread_schedule);
+
 	include MYBB_ROOT."/inc/adminfunctions_templates.php";
     find_replace_templatesets("newthread", "#".preg_quote('{$attachbox}')."#i", '{$attachbox} {$newthread_schedule}');
 	find_replace_templatesets("newreply", "#".preg_quote('{$attachbox}')."#i", '{$attachbox} {$newreply_schedule}');
@@ -155,7 +193,8 @@ function schedule_deactivate()
 
 		$alertTypeManager->deleteByCode('schedule_posted');
 	}
-
+	
+	$db->delete_query("templates", "title IN(newthread_schedule)");
 	include MYBB_ROOT."/inc/adminfunctions_templates.php";
     find_replace_templatesets("newthread", "#".preg_quote('{$newthread_schedule}')."#i", '', 0);
 	find_replace_templatesets("newreply", "#".preg_quote('{$newreply_schedule}')."#i", '', 0);
@@ -195,22 +234,26 @@ function schedule_newthread() {
             $sdate = $mybb->get_input('sdate');
             $stime = $mybb->get_input('stime');
         }
-        #https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/time
         eval("\$newthread_schedule = \"".$templates->get("newthread_schedule")."\";");
     }
 }
 
-// validate if post is posted as draft, set error otherwise
+// catch various errors
 function schedule_validate(&$dh) {
 	global $mybb, $lang;
 	$lang->load('schedule');
 	if($mybb->get_input('schedule') == 1 && $mybb->usergroup['canschedule'] == 1) {
+		// post is not saved as draft
 		if($mybb->get_input('savedraft') != 1) {
 			$dh->set_error($lang->schedule_error_no_draft);
 		}
+
+		// no valid timestamp given
 		if(!$mybb->get_input('sdate') || !$mybb->get_input('stime')) {
 			$dh->set_error($lang->schedule_error_no_time);
 		}
+
+		// given timestamp is below current time
 		$sdate = strtotime("{$mybb->get_input('sdate')} {$mybb->get_input('stime')}");
 		$now = TIME_NOW;
 		if($now > $sdate) {
