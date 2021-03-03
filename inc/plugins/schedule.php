@@ -291,7 +291,7 @@ function schedule_newthread() {
     $selectedforums = explode(",", $mybb->settings['schedule_forums']);
 
     foreach($selectedforums as $selected) {
-        if(preg_match("/,$selected,/i", $forum['parentlist'])) {
+        if(preg_match("/,$selected,/i", $forum['parentlist']) || $mybb->settings['schedule_forums'] == "-1") {
 			if($mybb->usergroup['canschedule'] == 1) {
 				// previewing post?
 				if(isset($mybb->input['previewpost']) || $post_errors) {
@@ -370,7 +370,7 @@ function schedule_newreply() {
     $selectedforums = explode(",", $mybb->settings['schedule_forums']);
 
     foreach($selectedforums as $selected) {
-        if(preg_match("/,$selected,/i", $forum['parentlist'])) {
+        if(preg_match("/,$selected,/i", $forum['parentlist']) || $mybb->settings['schedule_forums'] == "-1") {
 			if($mybb->usergroup['canschedule'] == 1) {
 				// previewing post?
 				if(isset($mybb->input['previewpost']) || $post_errors) {
