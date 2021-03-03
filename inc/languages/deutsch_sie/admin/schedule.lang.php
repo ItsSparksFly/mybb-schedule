@@ -5,4 +5,5 @@ $l['schedule_description'] = "Erweitert das Forum um die Funktion, Themen und Po
 $l['schedule_permission'] = "Kann Posts & Themen planen?";
 $l['schedule_forums'] = "Foren auswählen";
 $l['schedule_forums_desc'] = "In welchen Foren soll die Aktion aktiv sein?";
+$l['schedule_tasks'] = "Geplante Posts wurden veröffentlicht.";
 ?>

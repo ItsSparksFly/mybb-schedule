@@ -346,9 +346,6 @@ function schedule_do_newthread() {
 	$thread = get_thread($tid);
 	if($mybb->get_input('schedule') == 1) {
 		$check = $db->fetch_field($db->simple_select("scheduled", "sid", "tid='{$thread['tid']}'"), "sid");
-		if($check) {
-			$db->delete_query("scheduled", "sid='$check'");
-		}
 		$sdate = strtotime("{$mybb->get_input('sdate')} {$mybb->get_input('stime')}");
 		$new_array = [
 			"tid" => $tid,
@@ -356,7 +353,11 @@ function schedule_do_newthread() {
 			"date" => $sdate,
 			"display" => 0
 		];
-		$db->insert_query("scheduled", $new_array);
+		if($check) {
+			$db->update_query("scheduled", $new_array, "sid='$check'");
+		} else {
+			$db->insert_query("scheduled", $new_array);
+		}
 	}
 }
 
@@ -401,9 +402,6 @@ function schedule_do_newreply() {
 
 	if($mybb->get_input('schedule') == 1) {
 		$check = $db->fetch_field($db->simple_select("scheduled", "sid", "tid='{$thread['tid']}'"), "sid");
-		if($check) {
-			$db->delete_query("scheduled", "sid='$check'");
-		}
 		$sdate = strtotime("{$mybb->get_input('sdate')} {$mybb->get_input('stime')}");
 		$new_array = [
 			"tid" => $thread['tid'],
@@ -411,7 +409,11 @@ function schedule_do_newreply() {
 			"date" => $sdate,
 			"display" => 0
 		];
-		$db->insert_query("scheduled", $new_array);
+		if($check) {
+			$db->update_query("scheduled", $new_array, "sid='$check'");
+		} else {
+			$db->insert_query("scheduled", $new_array);
+		}
 	}
 }
 
