@@ -16,7 +16,7 @@ $plugins->add_hook("newreply_start", "schedule_newreply");
 $plugins->add_hook("newreply_do_newreply_end", "schedule_do_newreply");
 $plugins->add_hook("usercp_drafts_start", "schedule_drafts");
 if(class_exists('MybbStuff_MyAlerts_AlertTypeManager')) {
-	$plugins->add_hook("global_start", "schedule_alerts"); #TODO: format alert
+	$plugins->add_hook("global_start", "schedule_alerts");
 }
 
 function schedule_info()
@@ -70,7 +70,7 @@ function schedule_install()
 
      // build task in admin cp
      $date = TIME_NOW;
-     $nextrun = $date + 3600;
+	 $nextrun = strtotime(date("H", $date + 3600) . ":00");
      $ScheduleTask = [
          'title' => 'Post scheduled threads/posts',
          'description' => 'Automatically posts all schedulded threads & posts',
@@ -189,10 +189,11 @@ function schedule_activate()
 		}
 
 		$alertType = new MybbStuff_MyAlerts_Entity_AlertType();
-		$alertType->setCode('schedule_posted'); // The codename for your alert type. Can be any unique string.
+		$alertType->setCode('schedule_posted');
 		$alertType->setEnabled(true);
 		$alertType->setCanBeUserDisabled(true);
 
+		$alertTypeManager->add($alertType);
 	}   
 
 	$newthread_schedule = [
@@ -401,7 +402,7 @@ function schedule_do_newreply() {
 	$ownuid = $mybb->user['uid'];
 
 	if($mybb->get_input('schedule') == 1) {
-		$check = $db->fetch_field($db->simple_select("scheduled", "sid", "tid='{$thread['tid']}'"), "sid");
+		$check = $db->fetch_field($db->simple_select("scheduled", "sid", "tid='{$thread['tid']}' AND pid = '$pid'"), "sid");
 		$sdate = strtotime("{$mybb->get_input('sdate')} {$mybb->get_input('stime')}");
 		$new_array = [
 			"tid" => $thread['tid'],
@@ -439,9 +440,11 @@ function schedule_drafts() {
 		}
 		$dates[] = $draftinfo['date'];
 	}
-	foreach($pids as $key => $pid) {
-		$datestring = "<strong>Veröffentlichung am:</strong> " . date("d.m.Y H:i", $dates[$key]);
-		$scheduled[$pid] = $datestring;
+	if(!empty($pids)) {
+		foreach($pids as $key => $pid) {
+			$datestring = "<strong>Veröffentlichung am:</strong> " . date("d.m.Y H:i", $dates[$key]);
+			$scheduled[$pid] = $datestring;
+		}
 	}
 
 }
