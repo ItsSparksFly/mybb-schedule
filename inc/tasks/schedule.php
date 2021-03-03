@@ -1,7 +1,7 @@
 <?php
 
 function task_schedule($task){
-    global $mybb, $db, $lang, $posthandler, $scheduled, $thread, $post, $new_thread, $valid_thread, $thread_info, $alert_type, $alert;
+    global $mybb, $db, $lang, $posthandler, $scheduled, $thread, $post, $new_thread, $valid_thread, $thread_info;
     $lang->load('schedule');
 
     require_once MYBB_ROOT."inc/datahandlers/post.php";
