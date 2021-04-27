@@ -71,10 +71,10 @@ function schedule_install()
      // build task in admin cp
      $date = TIME_NOW;
 	 $nextrun = strtotime(date("H", $date + 3600) . ":00");
-     $ScheduleTask = [
-         'title' => 'Post scheduled threads/posts',
-         'description' => 'Automatically posts all schedulded threads & posts',
-         'file' => 'schedule',
+     $ScheduleThreads = [
+         'title' => 'Post scheduled threads',
+         'description' => 'Automatically posts all schedulded threads',
+         'file' => 'schedulethreads',
          'minute' => 0,
          'hour' => '*',
          'day' => '*',
@@ -84,7 +84,22 @@ function schedule_install()
          'logging' => 1,
          'locked' => 0
      ];
-     $db->insert_query('tasks', $ScheduleTask);
+     $db->insert_query('tasks', $ScheduleThreads);
+	
+     $SchedulePosts = [
+         'title' => 'Post scheduled posts',
+         'description' => 'Automatically posts all schedulded posts',
+         'file' => 'scheduleposts',
+         'minute' => 0,
+         'hour' => '*',
+         'day' => '*',
+         'month' => '*',
+         'weekday' => '*',
+         'nextrun' => $nextrun,
+         'logging' => 1,
+         'locked' => 0
+     ];
+     $db->insert_query('tasks', $SchedulePosts);
 
 	 // add css to themes 
 	 $css = array(
@@ -161,7 +176,7 @@ function schedule_uninstall()
 	}
 
     // delete task
-    $db->delete_query('tasks', 'file = "schedule"');
+    $db->delete_query('tasks', 'file LIKE "schedule%"');
 
     // drop css
     require_once MYBB_ADMIN_DIR."inc/functions_themes.php";
