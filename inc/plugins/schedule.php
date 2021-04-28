@@ -203,7 +203,7 @@ function schedule_activate()
 			<select name="schedule" class="div-toggle">
 				<option>Nein</option>
 				<option value="1" data-show=".with" {$selected}>Ja</option>
-			</select> <input type="date" name="sdate" value="{$sdate}" class="with hide" /> <input type="time" name="stime" required step="3600" value="{$stime}" class="with hide" />
+			</select> <input type="date" name="sdate" value="{$sdate}" class="with hide" /> <input type="time" name="stime" value="{$stime}" class="with hide" />
 		</td>
 	</tr>
 	</table>'),
@@ -488,6 +488,52 @@ function schedule_index() {
 			}
 		    }
 		}
+		
+if($post['visible'] == "-2" && $thread['visible'] == "1") {
+            $posthandler->action = "post";
+            $posthandler->set_data($post);
+
+            // Set the post data that came from the input to the $post array.
+            $post = array(
+                "tid" => $post['tid'],
+                "replyto" => $post['replyto'],
+                "fid" => $thread['fid'],
+                "subject" => $post['subject'],
+                "icon" => $post['icon'],
+                "uid" => $post['uid'],
+                "username" => $post['username'],
+                "message" => $post['message'],
+                "ipaddress" => $session->packedip,
+                "posthash" => $post['posthash'],
+                "dateline" => $scheduled['date']
+            );
+
+            $posthandler->set_data($post);
+            $valid_post = $posthandler->validate_post();
+            $post_errors = array();
+            // Fetch friendly error messages if this is an invalid post
+            if(!$valid_post)
+            {
+                $post_errors = $posthandler->get_friendly_errors();
+            }
+            
+            foreach($post_errors as $error) {
+                echo $error;
+            }
+
+            $postinfo = $posthandler->insert_post();
+
+            $db->delete_query("posts", "pid = '{$scheduled['pid']}'");            
+            
+            if(class_exists('MybbStuff_MyAlerts_AlertTypeManager')) {
+                $alertType = MybbStuff_MyAlerts_AlertTypeManager::getInstance()->getByCode('schedule_posted');
+                if ($alertType != NULL && $alertType->getEnabled()) {
+                    $alert = new MybbStuff_MyAlerts_Entity_Alert((int)$mybb->user['uid'], $alertType, (int)$post['tid']);
+                    MybbStuff_MyAlerts_AlertManager::getInstance()->addAlert($alert);
+                }
+            }
+        }
+		
 		$new_array = [
 		    "display" => 1
 		];
