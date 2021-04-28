@@ -68,39 +68,6 @@ function schedule_install()
      } 
      $cache->update_usergroups();
 
-     // build task in admin cp
-     $date = TIME_NOW;
-	 $nextrun = strtotime(date("H", $date + 3600) . ":00");
-     $ScheduleThreads = [
-         'title' => 'Post scheduled threads',
-         'description' => 'Automatically posts all schedulded threads',
-         'file' => 'schedulethreads',
-         'minute' => 0,
-         'hour' => '*',
-         'day' => '*',
-         'month' => '*',
-         'weekday' => '*',
-         'nextrun' => $nextrun,
-         'logging' => 1,
-         'locked' => 0
-     ];
-     $db->insert_query('tasks', $ScheduleThreads);
-	
-     $SchedulePosts = [
-         'title' => 'Post scheduled posts',
-         'description' => 'Automatically posts all schedulded posts',
-         'file' => 'scheduleposts',
-         'minute' => 0,
-         'hour' => '*',
-         'day' => '*',
-         'month' => '*',
-         'weekday' => '*',
-         'nextrun' => $nextrun,
-         'logging' => 1,
-         'locked' => 0
-     ];
-     $db->insert_query('tasks', $SchedulePosts);
-
 	 // add css to themes 
 	 $css = array(
         'name' => 'schedule.css',
@@ -174,9 +141,6 @@ function schedule_uninstall()
 	{
     	$db->drop_column("usergroups", "canschedule");
 	}
-
-    // delete task
-    $db->delete_query('tasks', 'file LIKE "schedule%"');
 
     // drop css
     require_once MYBB_ADMIN_DIR."inc/functions_themes.php";
