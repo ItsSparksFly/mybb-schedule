@@ -16,9 +16,6 @@ $plugins->add_hook("newreply_start", "schedule_newreply");
 $plugins->add_hook("newreply_do_newreply_end", "schedule_do_newreply");
 $plugins->add_hook("usercp_drafts_start", "schedule_drafts");
 $plugins->add_hook("index_end", "schedule_index");
-if(class_exists('MybbStuff_MyAlerts_AlertTypeManager')) {
-	$plugins->add_hook("global_start", "schedule_alerts");
-}
 
 function schedule_info()
 {
@@ -161,21 +158,6 @@ function schedule_activate()
 {
     global $db, $cache;
 
-    if(class_exists('MybbStuff_MyAlerts_AlertTypeManager')) {
-		$alertTypeManager = MybbStuff_MyAlerts_AlertTypeManager::getInstance();
-
-		if (!$alertTypeManager) {
-			$alertTypeManager = MybbStuff_MyAlerts_AlertTypeManager::createInstance($db, $cache);
-		}
-
-		$alertType = new MybbStuff_MyAlerts_Entity_AlertType();
-		$alertType->setCode('schedule_posted');
-		$alertType->setEnabled(true);
-		$alertType->setCanBeUserDisabled(true);
-
-		$alertTypeManager->add($alertType);
-	}   
-
 	$newthread_schedule = [
         'title'        => 'newthread_schedule',
         'template'    => $db->escape_string('<script>
@@ -224,16 +206,6 @@ function schedule_activate()
 function schedule_deactivate()
 {
     global $db, $cache;
-    
-	if (class_exists('MybbStuff_MyAlerts_AlertTypeManager')) {
-		$alertTypeManager = MybbStuff_MyAlerts_AlertTypeManager::getInstance();
-
-		if (!$alertTypeManager) {
-			$alertTypeManager = MybbStuff_MyAlerts_AlertTypeManager::createInstance($db, $cache);
-		}
-
-		$alertTypeManager->deleteByCode('schedule_posted');
-	}
 	
 	$db->delete_query("templates", "title IN('newthread_schedule')");
 	include MYBB_ROOT."/inc/adminfunctions_templates.php";
@@ -433,7 +405,6 @@ function schedule_index() {
 	global $mybb, $db, $lang, $posthandler, $scheduled, $thread, $post, $new_thread, $valid_thread, $thread_info;
    	$lang->load('schedule');
 	
-	if($mybb->user['uid']) {
 		require_once MYBB_ROOT."inc/datahandlers/post.php";
 		$posthandler = new PostDataHandler("insert");
 		$now = TIME_NOW;
@@ -481,14 +452,6 @@ function schedule_index() {
 
 			    $db->delete_query("threads", "tid = '{$scheduled['tid']}'");
 			    $db->delete_query("posts", "pid = '{$scheduled['pid']}'");
-
-			    if(class_exists('MybbStuff_MyAlerts_AlertTypeManager')) {
-				$alertType = MybbStuff_MyAlerts_AlertTypeManager::getInstance()->getByCode('schedule_posted');
-				if ($alertType != NULL && $alertType->getEnabled()) {
-				    $alert = new MybbStuff_MyAlerts_Entity_Alert((int)$post['uid'], $alertType, (int)$tid);
-				    MybbStuff_MyAlerts_AlertManager::getInstance()->addAlert($alert);
-				}
-			    }
 			}
 
 	if($post['visible'] == "-2" && $thread['visible'] == "1") {
@@ -526,14 +489,6 @@ function schedule_index() {
 		    $postinfo = $posthandler->insert_post();
 
 		    $db->delete_query("posts", "pid = '{$scheduled['pid']}'");            
-
-		    if(class_exists('MybbStuff_MyAlerts_AlertTypeManager')) {
-			$alertType = MybbStuff_MyAlerts_AlertTypeManager::getInstance()->getByCode('schedule_posted');
-			if ($alertType != NULL && $alertType->getEnabled()) {
-			    $alert = new MybbStuff_MyAlerts_Entity_Alert((int)$post['uid'], $alertType, (int)$post['tid']);
-			    MybbStuff_MyAlerts_AlertManager::getInstance()->addAlert($alert);
-			}
-		    }
 		}
 
 			$new_array = [
@@ -541,71 +496,6 @@ function schedule_index() {
 			];
 			$db->update_query("scheduled", $new_array, "sid = '{$scheduled['sid']}'");
 		}
-	}
-}
-
-function schedule_alerts() {
-	global $mybb, $lang;
-	$lang->load('schedule');
-	/**
-	 * Alert formatter for my custom alert type.
-	 */
-	class MybbStuff_MyAlerts_Formatter_schedulePostedFormatter extends MybbStuff_MyAlerts_Formatter_AbstractFormatter
-	{
-	    /**
-	     * Format an alert into it's output string to be used in both the main alerts listing page and the popup.
-	     *
-	     * @param MybbStuff_MyAlerts_Entity_Alert $alert The alert to format.
-	     *
-	     * @return string The formatted alert string.
-	     */
-	    public function formatAlert(MybbStuff_MyAlerts_Entity_Alert $alert, array $outputAlert)
-	    {
-	        return $this->lang->sprintf(
-	            $this->lang->schedule_posted,
-	            $outputAlert['from_user'],
-	            $outputAlert['dateline']
-	        );
-	    }
-
-	    /**
-	     * Init function called before running formatAlert(). Used to load language files and initialize other required
-	     * resources.
-	     *
-	     * @return void
-	     */
-	    public function init()
-	    {
-	        if (!$this->lang->schedule) {
-	            $this->lang->load('schedule');
-	        }
-	    }
-
-	    /**
-	     * Build a link to an alert's content so that the system can redirect to it.
-	     *
-	     * @param MybbStuff_MyAlerts_Entity_Alert $alert The alert to build the link for.
-	     *
-	     * @return string The built alert, preferably an absolute link.
-	     */
-	    public function buildShowLink(MybbStuff_MyAlerts_Entity_Alert $alert)
-	    {
-	        return $this->mybb->settings['bburl'] . '/' . get_thread_link($alert->getObjectId());
-	    }
-	}
-
-	if (class_exists('MybbStuff_MyAlerts_AlertFormatterManager')) {
-		$formatterManager = MybbStuff_MyAlerts_AlertFormatterManager::getInstance();
-
-		if (!$formatterManager) {
-			$formatterManager = MybbStuff_MyAlerts_AlertFormatterManager::createInstance($mybb, $lang);
-		}
-
-		$formatterManager->registerFormatter(
-				new MybbStuff_MyAlerts_Formatter_schedulePostedFormatter($mybb, $lang, 'schedule_posted')
-		);
-	}
-
 }
 
 function get_schedule(int $pid) {
