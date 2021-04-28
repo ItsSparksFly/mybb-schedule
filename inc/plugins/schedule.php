@@ -485,7 +485,7 @@ function schedule_index() {
 			    if(class_exists('MybbStuff_MyAlerts_AlertTypeManager')) {
 				$alertType = MybbStuff_MyAlerts_AlertTypeManager::getInstance()->getByCode('schedule_posted');
 				if ($alertType != NULL && $alertType->getEnabled()) {
-				    $alert = new MybbStuff_MyAlerts_Entity_Alert((int)$mybb->user['uid'], $alertType, (int)$tid);
+				    $alert = new MybbStuff_MyAlerts_Entity_Alert((int)$post['uid'], $alertType, (int)$tid);
 				    MybbStuff_MyAlerts_AlertManager::getInstance()->addAlert($alert);
 				}
 			    }
@@ -530,7 +530,7 @@ function schedule_index() {
 		    if(class_exists('MybbStuff_MyAlerts_AlertTypeManager')) {
 			$alertType = MybbStuff_MyAlerts_AlertTypeManager::getInstance()->getByCode('schedule_posted');
 			if ($alertType != NULL && $alertType->getEnabled()) {
-			    $alert = new MybbStuff_MyAlerts_Entity_Alert((int)$mybb->user['uid'], $alertType, (int)$post['tid']);
+			    $alert = new MybbStuff_MyAlerts_Entity_Alert((int)$post['uid'], $alertType, (int)$post['tid']);
 			    MybbStuff_MyAlerts_AlertManager::getInstance()->addAlert($alert);
 			}
 		    }
